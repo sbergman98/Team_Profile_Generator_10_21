@@ -1,3 +1,4 @@
+const Employee = require("./lib/Employee");
 const Manager = require("./lib/Manager");
 const Engineer = require("./lib/Engineer");
 const Intern = require("./lib/Intern");
@@ -7,6 +8,8 @@ const path = require("path");
 const fs = require("fs");
 const util = require("util")
 
+const writeFileAsync = util.promisify(fs.writeFile);
+
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
@@ -15,46 +18,136 @@ const render = require("./lib/htmlRenderer");
 
 // Write code to use inquirer to gather information about the development team members,\
 
-function promptUser() {
+function generalPrompt() {
 
+  return inquirer.prompt([
+    {
+      type: "input",
+      name: "name",
+      message: "What is the name of the Employee?"
+    },
+    {
+      type: "input",
+      name: "email",
+      message: "What is the Employee's Email?"
+    },
+    {
+      type: "input",
+      name: "id",
+      message: "What is the Employee ID number?"
+    },
+    {
+      type: "list",
+      name: "role",
+      message: "What type of Employee are they?",
+      choices: [
+        "Intern",
+        "Engineer",
+        "Manager",
+      ]
+    },
+
+  ])
+};
+
+function rolePrompt(role) {
+  if (role === "Intern") {
     return inquirer.prompt([
       {
         type: "input",
-        name: "Employee",
-        message: "What is the name of the Employee?"
+        name: "school",
+        message: "What School does the intern go to?"
       },
-      {
-        type: "input",
-        name: "Email",
-        message: "What is the Employee's Email?"
-      },
-  
-      {
-        type: "input",
-        name: "ID",
-        message: "What is the Employee ID number?"
-      },
-      {
-        type: "input",
-        name: "OfficeNumber",
-        message: "What is the Manager's Office Number?"
-      },
-      {
-        type: "input",
-        name: "github",
-        message: "What is the Engineer's GitHub username?"
-      },
-      {
-        type: "input",
-        name: "School",
-        message: "What school does the Intern go to?"
-      },
-  
     ])
-  };
-  
+  } else if (role === "Manager") {
+    return inquirer.prompt([
+      {
+        type: "input",
+        name: "officeNumber",
+        message: "What is the office number?"
+      },
+    ])
+  } else if (role === "Engineer")
+    return inquirer.prompt([
+      {
+        type: "input",
+        name: "gitHubName",
+        message: "What is your GitHub Name?"
+      },
+    ])
+
+
+};
+
+function continuePrompt() {
+  return inquirer.prompt([
+    { 
+      type: "list",
+      name: "continue",
+      message: "Do you want to add more Employees?",
+      choices: [
+              "Yes",
+              "No",
+            ]
+    },
+  ])
+ 
+};
+
+
+let answers;
+let roleAnswer;
+let employee;
+let continuation;
+
+async function init() {
+
+  try {
+
+    const employees = []
+    let addMore = true
+    while (addMore) {
+      answers = await generalPrompt()
+      roleAnswer = await rolePrompt(answers.role)
+      Object.assign(answers, roleAnswer)
+      switch(answers.role) {
+        case "Intern":
+          employee = new Intern(answers.name, answers.id, answers.email, answers.school)
+          break;
+        case "Manager":
+          employee = new Manager(answers.name, answers.id, answers.email, answers.officeNumber)
+          break;
+        default:
+          employee = new Engineer(answers.name, answers.id, answers.email, answers.gitHubName)
+      }
+      employees.push(employee)
+      continuation = await continuePrompt()
+      addMore = continuation.continue === "Yes"
+    }
+    
+
+
+    const html = render(employees);
+     
+    await writeFileAsync("Output/team.html", html);
+
+  } catch (err) {
+    console.log(err);
+  }
+
+}
+
+
+
+init();
+
 
 // and to create objects for each team member (using the correct classes as blueprints!)
+
+
+// const employee = new Employee();
+
+// employee.employeeInfo();
 
 // After the user has input all employees desired, call the `render` function (required
 

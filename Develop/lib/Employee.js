@@ -8,9 +8,22 @@ class Employee {
 
     }
     employeeInfo() {
-        console.log('The employee name is ${this.name}');
-        console.log('The employee id is ${this.id}');
-        console.log('The employee email is ${this.email}');
+        console.log(`The employee name is ${this.name}`);
+        console.log(`The employee id is ${this.id}`);
+        console.log(`The employee email is ${this.email}`);
+    }
+
+    getRole() {
+        return this.role 
+    }
+    getId() {
+        return this.id 
+    }
+    getName() {
+        return this.name
+    }
+    getEmail() {
+        return this.email
     }
 
 
